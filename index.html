@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Projetos da Turma</title>
+    <!-- Tailwind CSS para um visual moderno e limpo -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Biblioteca Mammoth para ler arquivos .docx (Word) diretamente no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        .slide-content h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #1e3a8a; }
+        .slide-content h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e40af; }
+        .slide-content p { margin-bottom: 0.75rem; line-height: 1.6; color: #374151; }
+        .slide-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .slide-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+    <!-- Navegação -->
+    <nav class="bg-blue-600 text-white shadow-md p-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">🚀 Transformador de Ideias em Sites</h1>
+            <div class="space-x-4">
+                <button onclick="switchTab('aluno')" id="btn-aluno" class="bg-blue-800 px-4 py-2 rounded font-semibold transition shadow">Área do Aluno (Enviar)</button>
+                <button onclick="switchTab('professor')" id="btn-professor" class="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">Área do Professor (Apresentar)</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-6xl mx-auto p-4 mt-6">
+
+        <!-- ABA DO ALUNO -->
+        <section id="aba-aluno" class="block max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Enviar Trabalho (Sem Login)</h2>
+            <p class="text-gray-600 mb-6">Digite seu nome e escolha seu arquivo do Word (.docx) contendo as ideias do seu site.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">Seu Nome Completo:</label>
+                    <input type="text" id="aluno-nome" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500" placeholder="Ex: Maria Souza">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">Selecione o arquivo do Word (.docx):</label>
+                    <input type="file" id="aluno-arquivo" accept=".docx" class="w-full p-2 border border-dashed border-gray-400 bg-gray-50 rounded cursor-pointer">
+                </div>
+
+                <button onclick="processarEEnviar()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow transition">
+                    📤 Enviar Trabalho para a Tela
+                </button>
+                
+                <div id="status-envio" class="hidden text-center font-semibold p-3 rounded"></div>
+            </div>
+        </section>
+
+        <!-- ABA DO PROFESSOR (SLIDES E ANOTAÇÕES) -->
+        <section id="aba-professor" class="hidden">
+            <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Apresentação dos Trabalhos</h2>
+                    <p class="text-sm text-gray-600">Trabalhos em ordem alfabética para discussão e debate na sala.</p>
+                </div>
+                <button onclick="limparTodosDados()" class="text-red-500 hover:text-red-700 font-semibold text-sm bg-red-50 p-2 rounded border border-red-200">
+                    ⚠️ Limpar Todos os Trabalhos
+                </button>
+            </div>
+
+            <!-- Layout Dois Painéis: Slide à esquerda, Anotações à direita -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Tela do Slide (Ocupa 2 colunas) -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md flex flex-col justify-between min-h-[500px]">
+                    <div id="sem-trabalhos" class="text-center py-20 text-gray-500 block">
+                        <p class="text-xl font-semibold">Nenhum trabalho enviado ainda nesta sessão.</p>
+                        <p class="text-sm mt-1">Vá na "Área do Aluno" para adicionar os arquivos.</p>
+                    </div>
+
+                    <div id="conteudo-slide" class="hidden flex-1">
+                        <div class="border-b pb-3 mb-4 flex justify-between items-center bg-blue-50 -m-6 p-6 rounded-t-lg">
+                            <div>
+                                <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Autor do Projeto</span>
+                                <h3 id="slide-nome-aluno" class="text-2xl font-black text-gray-900">Nome do Aluno</h3>
+                            </div>
+                            <span id="slide-contador" class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">0/0</span>
+                        </div>
+                        
+                        <!-- Conteúdo extraído do Word inserido aqui -->
+                        <div id="slide-texto-word" class="slide-content overflow-y-auto max-h-[380px] pr-2 mt-6"></div>
+                    </div>
+
+                    <!-- Controles do Slide -->
+                    <div id="controles-slide" class="hidden border-t pt-4 mt-4 flex justify-between items-center">
+                        <button onclick="mudarSlide(-1)" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
+                            ◀️ Anterior
+                        </button>
+                        <button onclick="mudarSlide(1)" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
+                            Próximo ▶️
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Painel de Anotações do Professor (Ocupa 1 coluna) -->
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-2 flex items-center gap-2">
+                            📝 Espaço de Anotações
+                        </h3>
+                        <p class="text-xs text-gray-500 mb-3">As notas digitadas abaixo ficam salvas automaticamente para cada aluno.</p>
+                        <textarea id="campo-anotacoes" disabled class="w-full h-64 p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-gray-50 text-gray-700" placeholder="Selecione um trabalho para fazer anotações conjuntas com a turma..."></textarea>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-xs text-yellow-800 mt-4">
+                        💡 <strong>Dica Pedagógica:</strong> Use este espaço para anotar quais ferramentas de criação de sites (Wix, HTML, Google Sites) melhor se adaptam à ideia do aluno!
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Estrutura global de armazenamento (salva no navegador)
+        let dadosTurma = JSON.parse(localStorage.getItem('dadosTurma')) || [];
+        let indexAtual = 0;
+
+        // Atualiza a visualização inicial se houver dados antigos salvos
+        if (dadosTurma.length > 0) ordenarTrabalhos();
+
+        // Troca de Abas (Interface Aluno / Interface Professor)
+        function switchTab(aba) {
+            const abaAluno = document.getElementById('aba-aluno');
+            const abaProfessor = document.getElementById('aba-professor');
+            const btnAluno = document.getElementById('btn-aluno');
+            const btnProfessor = document.getElementById('btn-professor');
+
+            if (aba === 'aluno') {
+                abaAluno.classList.remove('hidden');
+                abaProfessor.classList.add('hidden');
+                btnAluno.className = "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+                btnProfessor.className = "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
+            } else {
+                abaAluno.classList.add('hidden');
+                abaProfessor.classList.remove('hidden');
+                btnAluno.className = "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
+                btnProfessor.className = "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+                renderizarSlides();
+            }
+        }
+
+        // Processa o arquivo .docx (Word) e joga na memória estruturada
+        function processarEEnviar() {
+            const nomeInput = document.getElementById('aluno-nome').value.trim();
+            const arquivoInput = document.getElementById('aluno-arquivo').files[0];
+            const statusDiv = document.getElementById('status-envio');
+
+            if (!nomeInput) {
+                mostrarStatus('Por favor, insira o seu nome antes de enviar.', 'error');
+                return;
+            }
+            if (!arquivoInput) {
+                mostrarStatus('Por favor, escolha o seu arquivo Word (.docx).', 'error');
+                return;
+            }
+
+            mostrarStatus('Lendo e estruturando seu arquivo... Aguarde.', 'info');
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                
+                // Converte o Word em elementos HTML nativos usando mammoth
+                mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                    .then(function(result) {
+                        const htmlExtraido = result.value;
+
+                        // Verifica se o aluno já enviou algo para atualizar ou criar novo
+                        const indexExistente = dadosTurma.findIndex(item => item.nome.toLowerCase() === nomeInput.toLowerCase());
+                        
+                        if (indexExistente > -1) {
+                            dadosTurma[indexExistente].html = htmlExtraido;
+                        } else {
+                            dadosTurma.push({
+                                nome: nomeInput,
+                                html: htmlExtraido,
+                                anotacoes: ""
+                            });
+                        }
+
+                        ordenarTrabalhos();
+                        mostrarStatus('🚀 Sucesso! Seu trabalho foi transformado e enviado para a fila de slides.', 'success');
+                        
+                        // Limpa os campos do formulário após envio com sucesso
+                        document.getElementById('aluno-nome').value = '';
+                        document.getElementById('aluno-arquivo').value = '';
+                    })
+                    .catch(function(err) {
+                        console.error(err);
+                        mostrarStatus('Erro ao ler o arquivo Word. Verifique se ele não está corrompido.', 'error');
+                    });
+            };
+            reader.readAsArrayBuffer(arquivoInput);
+        }
+
+        function ordenarTrabalhos() {
+            // Ordena os trabalhos de A a Z pelo nome do aluno
+            dadosTurma.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+            localStorage.setItem('dadosTurma', JSON.stringify(dadosTurma));
+        }
+
+        function mostrarStatus(mensagem, tipo) {
+            const statusDiv = document.getElementById('status-envio');
+            statusDiv.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-blue-100', 'text-blue-800');
+            
+            if (tipo === 'error') {
+                statusDiv.classList.add('bg-red-100', 'text-red-800');
+            } else if (tipo === 'success') {
+                statusDiv.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                statusDiv.classList.add('bg-blue-100', 'text-blue-800');
+            }
+            statusDiv.innerText = mensagem;
+            statusDiv.classList.remove('hidden');
+        }
+
+        // Renderiza e gerencia os slides e as anotações
+        function renderizarSlides() {
+            const semTrabalhos = document.getElementById('sem-trabalhos');
+            const conteudoSlide = document.getElementById('conteudo-slide');
+            const controlesSlide = document.getElementById('controles-slide');
+            const campoAnotacoes = document.getElementById('campo-anotacoes');
+
+            if (dadosTurma.length === 0) {
+                semTrabalhos.classList.remove('hidden');
+                conteudoSlide.classList.add('hidden');
+                controlesSlide.classList.add('hidden');
+                campoAnotacoes.value = "";
+                campoAnotacoes.setAttribute('disabled', 'true');
+                campoAnotacoes.classList.add('bg-gray-50');
+                return;
+            }
+
+            semTrabalhos.classList.add('hidden');
+            conteudoSlide.classList.remove('hidden');
+            controlesSlide.classList.remove('hidden');
+            campoAnotacoes.removeAttribute('disabled');
+            campoAnotacoes.classList.remove('bg-gray-50');
+
+            // Garante estabilidade nos limites do índice
+            if (indexAtual >= dadosTurma.length) indexAtual = dadosTurma.length - 1;
+            if (indexAtual < 0) indexAtual = 0;
+
+            const itemAtual = dadosTurma[indexAtual];
+            
+            document.getElementById('slide-nome-aluno').innerText = itemAtual.nome;
+            document.getElementById('slide-contador').innerText = `${indexAtual + 1} / ${dadosTurma.length}`;
+            document.getElementById('slide-texto-word').innerHTML = itemAtual.html || "<p class='text-gray-400 italic'>O arquivo enviado estava sem conteúdo legível.</p>";
+            
+            // Carrega a anotação salva para este aluno específico
+            campoAnotacoes.value = itemAtual.anotacoes || "";
+        }
+
+        function mudarSlide(direcao) {
+            indexAtual += direcao;
+            if (indexAtual >= dadosTurma.length) indexAtual = 0; // Volta ao início
+            if (indexAtual < 0) indexAtual = dadosTurma.length - 1; // Vai para o fim
+            renderizarSlides();
+        }
+
+        // Escuta e salva as anotações dinamicamente em tempo de digitação
+        document.getElementById('campo-anotacoes').addEventListener('input', function(e) {
+            if (dadosTurma[indexAtual]) {
+                dadosTurma[indexAtual].anotacoes = e.target.value;
+                localStorage.setItem('dadosTurma', JSON.stringify(dadosTurma));
+            }
+        });
+
+        // Apaga a memória para reiniciar a dinâmica com outra turma
+        function limparTodosDados() {
+            if (confirm("Tem certeza que deseja apagar os arquivos enviados? Isso removerá o trabalho de todos e as anotações.")) {
+                dadosTurma = [];
+                indexAtual = 0;
+                localStorage.removeItem('dadosTurma');
+                renderizarSlides();
+            }
+        }
+    </script>
+</body>
+</html>
