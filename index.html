@@ -611,7 +611,7 @@
 
     carregarTrabalhos();
 
-}
+
     }
 
 
@@ -832,107 +832,7 @@ function processarEEnviar() {
     }
 
 
-    if (!arquivoInput) {
-
-        mostrarStatus(
-            'Por favor, escolha o seu arquivo Word (.docx).',
-            'error'
-        );
-
-        return;
-    }
-
-
-    mostrarStatus(
-        'Lendo e estruturando seu arquivo... Aguarde.',
-        'info'
-    );
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload = function(event) {
-
-        const arrayBuffer =
-            event.target.result;
-
-
-        mammoth.convertToHtml({
-            arrayBuffer: arrayBuffer
-        })
-
-        .then(async function(result) {
-
-            const htmlExtraido =
-                result.value;
-
-
-            mostrarStatus(
-                'Enviando trabalho para o servidor...',
-                'info'
-            );
-
-
-            const { error } =
-                await supabaseClient
-                    .from('trabalhos')
-                    .insert([
-                        {
-                            nome: nomeInput,
-                            html: htmlExtraido,
-                            anotacoes: ""
-                        }
-                    ]);
-
-
-            if (error) {
-
-                console.error(error);
-
-                mostrarStatus(
-                    '❌ Erro ao enviar o trabalho. Tente novamente.',
-                    'error'
-                );
-
-                return;
-            }
-
-
-            mostrarStatus(
-                '🚀 Sucesso! Seu trabalho foi enviado para o professor.',
-                'success'
-            );
-
-
-            document.getElementById('aluno-nome')
-                .value = '';
-
-            document.getElementById('aluno-arquivo')
-                .value = '';
-
-        })
-
-        .catch(function(err) {
-
-            console.error(err);
-
-            mostrarStatus(
-                'Erro ao ler o arquivo Word. Verifique se ele não está corrompido.',
-                'error'
-            );
-
-        });
-
-    };
-
-
-    reader.readAsArrayBuffer(arquivoInput);
-
-}
-
-        if (!arquivoInput) {
+          if (!arquivoInput) {
 
             mostrarStatus(
                 'Por favor, escolha o seu arquivo Word (.docx).',
@@ -984,22 +884,7 @@ function processarEEnviar() {
 
                 } else {
 
-                    dadosTurma.push({
-
-                        nome: nomeInput,
-
-                        html: htmlExtraido,
-
-                        anotacoes: ""
-
-                    });
-
-                }
-
-
-                ordenarTrabalhos();
-
-
+                  
                 mostrarStatus(
                     '🚀 Sucesso! Seu trabalho foi transformado e enviado para a fila de slides.',
                     'success'
