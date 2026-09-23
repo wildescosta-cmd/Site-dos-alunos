@@ -1,293 +1,1745 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Painel de Projetos da Turma</title>
-    <!-- Tailwind CSS para um visual moderno e limpo -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Biblioteca Mammoth para ler arquivos .docx (Word) diretamente no navegador -->
+
+    <!-- Mammoth - leitura de arquivos Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
     <style>
-        .slide-content h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #1e3a8a; }
-        .slide-content h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e40af; }
-        .slide-content p { margin-bottom: 0.75rem; line-height: 1.6; color: #374151; }
-        .slide-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        .slide-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+
+        .slide-content h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #1e3a8a;
+        }
+
+        .slide-content h2 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #1e40af;
+        }
+
+        .slide-content p {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .slide-content ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .slide-content ol {
+            list-style-type: decimal;
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        #modal-senha,
+        #modal-alterar-senha {
+            backdrop-filter: blur(5px);
+        }
+
     </style>
+
 </head>
+
+
 <body class="bg-gray-100 min-h-screen font-sans">
 
-    <!-- Navegação -->
-    <nav class="bg-blue-600 text-white shadow-md p-4">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🚀 Transformador de Ideias em Sites</h1>
-            <div class="space-x-4">
-                <button onclick="switchTab('aluno')" id="btn-aluno" class="bg-blue-800 px-4 py-2 rounded font-semibold transition shadow">Área do Aluno (Enviar)</button>
-                <button onclick="switchTab('professor')" id="btn-professor" class="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">Área do Professor (Apresentar)</button>
-            </div>
+
+<!-- ========================================================= -->
+<!-- NAVEGAÇÃO -->
+<!-- ========================================================= -->
+
+<nav class="bg-blue-600 text-white shadow-md p-4">
+
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+
+        <h1 class="text-xl font-bold">
+            🚀 Transformador de Ideias em Sites
+        </h1>
+
+        <div class="space-x-2">
+
+            <button
+                onclick="switchTab('aluno')"
+                id="btn-aluno"
+                class="bg-blue-800 px-4 py-2 rounded font-semibold transition shadow">
+
+                👨‍🎓 Área do Aluno
+
+            </button>
+
+
+            <button
+                onclick="abrirAreaProfessor()"
+                id="btn-professor"
+                class="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">
+
+                🔒 Área do Professor
+
+            </button>
+
         </div>
-    </nav>
 
-    <!-- Conteúdo Principal -->
-    <main class="max-w-6xl mx-auto p-4 mt-6">
+    </div>
 
-        <!-- ABA DO ALUNO -->
-        <section id="aba-aluno" class="block max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Enviar Trabalho (Sem Login)</h2>
-            <p class="text-gray-600 mb-6">Digite seu nome e escolha seu arquivo do Word (.docx) contendo as ideias do seu site.</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1">Seu Nome Completo:</label>
-                    <input type="text" id="aluno-nome" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500" placeholder="Ex: Maria Souza">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1">Selecione o arquivo do Word (.docx):</label>
-                    <input type="file" id="aluno-arquivo" accept=".docx" class="w-full p-2 border border-dashed border-gray-400 bg-gray-50 rounded cursor-pointer">
-                </div>
+</nav>
 
-                <button onclick="processarEEnviar()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow transition">
-                    📤 Enviar Trabalho para a Tela
-                </button>
-                
-                <div id="status-envio" class="hidden text-center font-semibold p-3 rounded"></div>
-            </div>
-        </section>
 
-        <!-- ABA DO PROFESSOR (SLIDES E ANOTAÇÕES) -->
-        <section id="aba-professor" class="hidden">
-            <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Apresentação dos Trabalhos</h2>
-                    <p class="text-sm text-gray-600">Trabalhos em ordem alfabética para discussão e debate na sala.</p>
-                </div>
-                <button onclick="limparTodosDados()" class="text-red-500 hover:text-red-700 font-semibold text-sm bg-red-50 p-2 rounded border border-red-200">
-                    ⚠️ Limpar Todos os Trabalhos
-                </button>
+<!-- ========================================================= -->
+<!-- MODAL DE LOGIN -->
+<!-- ========================================================= -->
+
+<div
+    id="modal-senha"
+    class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+
+        <div class="text-center mb-5">
+
+            <div class="text-5xl mb-3">
+                🔐
             </div>
 
-            <!-- Layout Dois Painéis: Slide à esquerda, Anotações à direita -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Tela do Slide (Ocupa 2 colunas) -->
-                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md flex flex-col justify-between min-h-[500px]">
-                    <div id="sem-trabalhos" class="text-center py-20 text-gray-500 block">
-                        <p class="text-xl font-semibold">Nenhum trabalho enviado ainda nesta sessão.</p>
-                        <p class="text-sm mt-1">Vá na "Área do Aluno" para adicionar os arquivos.</p>
-                    </div>
+            <h2 class="text-2xl font-bold text-gray-800">
+                Área Restrita
+            </h2>
 
-                    <div id="conteudo-slide" class="hidden flex-1">
-                        <div class="border-b pb-3 mb-4 flex justify-between items-center bg-blue-50 -m-6 p-6 rounded-t-lg">
-                            <div>
-                                <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Autor do Projeto</span>
-                                <h3 id="slide-nome-aluno" class="text-2xl font-black text-gray-900">Nome do Aluno</h3>
-                            </div>
-                            <span id="slide-contador" class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">0/0</span>
-                        </div>
-                        
-                        <!-- Conteúdo extraído do Word inserido aqui -->
-                        <div id="slide-texto-word" class="slide-content overflow-y-auto max-h-[380px] pr-2 mt-6"></div>
-                    </div>
+            <p class="text-gray-500 mt-2">
+                Digite a senha do professor.
+            </p>
 
-                    <!-- Controles do Slide -->
-                    <div id="controles-slide" class="hidden border-t pt-4 mt-4 flex justify-between items-center">
-                        <button onclick="mudarSlide(-1)" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
-                            ◀️ Anterior
-                        </button>
-                        <button onclick="mudarSlide(1)" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
-                            Próximo ▶️
-                        </button>
-                    </div>
-                </div>
+        </div>
 
-                <!-- Painel de Anotações do Professor (Ocupa 1 coluna) -->
-                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+
+        <input
+            type="password"
+            id="senha-login"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-3"
+            placeholder="Digite sua senha"
+            onkeydown="if(event.key === 'Enter') verificarLogin()">
+
+
+        <div
+            id="erro-login"
+            class="hidden bg-red-100 text-red-700 border border-red-200 p-3 rounded-lg text-sm mb-3">
+
+            ❌ Senha incorreta.
+
+        </div>
+
+
+        <div class="flex gap-3">
+
+            <button
+                onclick="fecharModalSenha()"
+                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg">
+
+                Cancelar
+
+            </button>
+
+
+            <button
+                onclick="verificarLogin()"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+
+                🔓 Entrar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- MODAL DE PRIMEIRO CADASTRO DA SENHA -->
+<!-- ========================================================= -->
+
+<div
+    id="modal-primeira-senha"
+    class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+
+        <div class="text-center mb-5">
+
+            <div class="text-5xl mb-3">
+                🔑
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+                Criar Senha do Professor
+            </h2>
+
+            <p class="text-gray-500 mt-2">
+                Este é o primeiro acesso. Crie uma senha para proteger a área do professor.
+            </p>
+
+        </div>
+
+
+        <input
+            type="password"
+            id="nova-senha-primeiro-acesso"
+            class="w-full p-3 border border-gray-300 rounded-lg mb-3"
+            placeholder="Nova senha">
+
+
+        <input
+            type="password"
+            id="confirmar-senha-primeiro-acesso"
+            class="w-full p-3 border border-gray-300 rounded-lg mb-3"
+            placeholder="Confirme a senha">
+
+
+        <div
+            id="erro-primeira-senha"
+            class="hidden bg-red-100 text-red-700 border border-red-200 p-3 rounded-lg text-sm mb-3">
+        </div>
+
+
+        <div class="flex gap-3">
+
+            <button
+                onclick="fecharPrimeiroAcesso()"
+                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg">
+
+                Cancelar
+
+            </button>
+
+
+            <button
+                onclick="salvarPrimeiraSenha()"
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg">
+
+                💾 Criar Senha
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- MODAL ALTERAR SENHA -->
+<!-- ========================================================= -->
+
+<div
+    id="modal-alterar-senha"
+    class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+
+        <div class="text-center mb-5">
+
+            <div class="text-5xl mb-3">
+                🔄
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+                Alterar Senha
+            </h2>
+
+            <p class="text-gray-500 mt-2">
+                Digite a senha atual e depois escolha uma nova senha.
+            </p>
+
+        </div>
+
+
+        <input
+            type="password"
+            id="senha-atual"
+            class="w-full p-3 border border-gray-300 rounded-lg mb-3"
+            placeholder="Senha atual">
+
+
+        <input
+            type="password"
+            id="nova-senha"
+            class="w-full p-3 border border-gray-300 rounded-lg mb-3"
+            placeholder="Nova senha">
+
+
+        <input
+            type="password"
+            id="confirmar-nova-senha"
+            class="w-full p-3 border border-gray-300 rounded-lg mb-3"
+            placeholder="Confirme a nova senha">
+
+
+        <div
+            id="erro-alterar-senha"
+            class="hidden bg-red-100 text-red-700 border border-red-200 p-3 rounded-lg text-sm mb-3">
+        </div>
+
+
+        <div class="flex gap-3">
+
+            <button
+                onclick="fecharAlterarSenha()"
+                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg">
+
+                Cancelar
+
+            </button>
+
+
+            <button
+                onclick="alterarSenha()"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+
+                🔄 Alterar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- CONTEÚDO PRINCIPAL -->
+<!-- ========================================================= -->
+
+<main class="max-w-6xl mx-auto p-4 mt-6">
+
+
+<!-- ========================================================= -->
+<!-- ÁREA DO ALUNO -->
+<!-- ========================================================= -->
+
+<section
+    id="aba-aluno"
+    class="block max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
+
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">
+
+        Enviar Trabalho
+
+    </h2>
+
+
+    <p class="text-gray-600 mb-6">
+
+        Digite seu nome e escolha seu arquivo do Word (.docx)
+        contendo as ideias do seu site.
+
+    </p>
+
+
+    <div class="space-y-4">
+
+
+        <div>
+
+            <label class="block text-gray-700 font-semibold mb-1">
+
+                Seu Nome Completo:
+
+            </label>
+
+
+            <input
+                type="text"
+                id="aluno-nome"
+                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                placeholder="Ex: Maria Souza">
+
+        </div>
+
+
+        <div>
+
+            <label class="block text-gray-700 font-semibold mb-1">
+
+                Selecione o arquivo do Word (.docx):
+
+            </label>
+
+
+            <input
+                type="file"
+                id="aluno-arquivo"
+                accept=".docx"
+                class="w-full p-2 border border-dashed border-gray-400 bg-gray-50 rounded cursor-pointer">
+
+        </div>
+
+
+        <button
+            onclick="processarEEnviar()"
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow transition">
+
+            📤 Enviar Trabalho
+
+        </button>
+
+
+        <div
+            id="status-envio"
+            class="hidden text-center font-semibold p-3 rounded">
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- ÁREA DO PROFESSOR -->
+<!-- ========================================================= -->
+
+<section
+    id="aba-professor"
+    class="hidden">
+
+
+    <!-- CABEÇALHO -->
+
+    <div
+        class="flex flex-wrap justify-between items-center gap-3 mb-4 bg-white p-4 rounded-lg shadow">
+
+        <div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+
+                Apresentação dos Trabalhos
+
+            </h2>
+
+
+            <p class="text-sm text-gray-600">
+
+                Trabalhos em ordem alfabética para discussão e debate.
+
+            </p>
+
+        </div>
+
+
+        <div class="flex gap-2 flex-wrap">
+
+
+            <!-- Alterar senha -->
+
+            <button
+                onclick="abrirAlterarSenha()"
+                class="text-blue-600 hover:text-blue-800 font-semibold text-sm bg-blue-50 p-2 rounded border border-blue-200">
+
+                🔑 Alterar Senha
+
+            </button>
+
+
+            <!-- Excluir trabalho -->
+
+            <button
+                onclick="excluirTrabalhoAtual()"
+                class="text-red-500 hover:text-red-700 font-semibold text-sm bg-red-50 p-2 rounded border border-red-200">
+
+                🗑️ Excluir Trabalho
+
+            </button>
+
+
+            <!-- Sair -->
+
+            <button
+                onclick="sairProfessor()"
+                class="text-gray-600 hover:text-gray-900 font-semibold text-sm bg-gray-100 p-2 rounded border border-gray-300">
+
+                🚪 Sair
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- PAINÉIS -->
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+
+        <!-- SLIDE -->
+
+        <div
+            class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md flex flex-col justify-between min-h-[500px]">
+
+
+            <div
+                id="sem-trabalhos"
+                class="text-center py-20 text-gray-500 block">
+
+                <p class="text-xl font-semibold">
+
+                    Nenhum trabalho enviado ainda.
+
+                </p>
+
+
+                <p class="text-sm mt-1">
+
+                    Vá na "Área do Aluno" para adicionar os arquivos.
+
+                </p>
+
+            </div>
+
+
+            <div
+                id="conteudo-slide"
+                class="hidden flex-1">
+
+
+                <div
+                    class="border-b pb-3 mb-4 flex justify-between items-center bg-blue-50 -m-6 p-6 rounded-t-lg">
+
+
                     <div>
-                        <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-2 flex items-center gap-2">
-                            📝 Espaço de Anotações
+
+                        <span
+                            class="text-xs font-bold text-blue-600 uppercase tracking-wide">
+
+                            Autor do Projeto
+
+                        </span>
+
+
+                        <h3
+                            id="slide-nome-aluno"
+                            class="text-2xl font-black text-gray-900">
+
+                            Nome do Aluno
+
                         </h3>
-                        <p class="text-xs text-gray-500 mb-3">As notas digitadas abaixo ficam salvas automaticamente para cada aluno.</p>
-                        <textarea id="campo-anotacoes" disabled class="w-full h-64 p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-gray-50 text-gray-700" placeholder="Selecione um trabalho para fazer anotações conjuntas com a turma..."></textarea>
+
                     </div>
-                    
-                    <div class="bg-yellow-50 border border-yellow-200 p-3 rounded text-xs text-yellow-800 mt-4">
-                        💡 <strong>Dica Pedagógica:</strong> Use este espaço para anotar quais ferramentas de criação de sites (Wix, HTML, Google Sites) melhor se adaptam à ideia do aluno!
-                    </div>
+
+
+                    <span
+                        id="slide-contador"
+                        class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+
+                        0 / 0
+
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="slide-texto-word"
+                    class="slide-content overflow-y-auto max-h-[380px] pr-2 mt-6">
                 </div>
 
             </div>
-        </section>
 
-    </main>
 
-    <script>
-        // Estrutura global de armazenamento (salva no navegador)
-        let dadosTurma = JSON.parse(localStorage.getItem('dadosTurma')) || [];
-        let indexAtual = 0;
+            <!-- CONTROLES -->
 
-        // Atualiza a visualização inicial se houver dados antigos salvos
-        if (dadosTurma.length > 0) ordenarTrabalhos();
+            <div
+                id="controles-slide"
+                class="hidden border-t pt-4 mt-4 flex justify-between items-center">
 
-        // Troca de Abas (Interface Aluno / Interface Professor)
-        function switchTab(aba) {
-            const abaAluno = document.getElementById('aba-aluno');
-            const abaProfessor = document.getElementById('aba-professor');
-            const btnAluno = document.getElementById('btn-aluno');
-            const btnProfessor = document.getElementById('btn-professor');
 
-            if (aba === 'aluno') {
-                abaAluno.classList.remove('hidden');
-                abaProfessor.classList.add('hidden');
-                btnAluno.className = "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
-                btnProfessor.className = "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
-            } else {
-                abaAluno.classList.add('hidden');
-                abaProfessor.classList.remove('hidden');
-                btnAluno.className = "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
-                btnProfessor.className = "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
-                renderizarSlides();
-            }
-        }
+                <button
+                    onclick="mudarSlide(-1)"
+                    class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
 
-        // Processa o arquivo .docx (Word) e joga na memória estruturada
-        function processarEEnviar() {
-            const nomeInput = document.getElementById('aluno-nome').value.trim();
-            const arquivoInput = document.getElementById('aluno-arquivo').files[0];
-            const statusDiv = document.getElementById('status-envio');
+                    ◀️ Anterior
 
-            if (!nomeInput) {
-                mostrarStatus('Por favor, insira o seu nome antes de enviar.', 'error');
-                return;
-            }
-            if (!arquivoInput) {
-                mostrarStatus('Por favor, escolha o seu arquivo Word (.docx).', 'error');
-                return;
-            }
+                </button>
 
-            mostrarStatus('Lendo e estruturando seu arquivo... Aguarde.', 'info');
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const arrayBuffer = event.target.result;
-                
-                // Converte o Word em elementos HTML nativos usando mammoth
-                mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
-                    .then(function(result) {
-                        const htmlExtraido = result.value;
+                <button
+                    onclick="mudarSlide(1)"
+                    class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
 
-                        // Verifica se o aluno já enviou algo para atualizar ou criar novo
-                        const indexExistente = dadosTurma.findIndex(item => item.nome.toLowerCase() === nomeInput.toLowerCase());
-                        
-                        if (indexExistente > -1) {
-                            dadosTurma[indexExistente].html = htmlExtraido;
-                        } else {
-                            dadosTurma.push({
-                                nome: nomeInput,
-                                html: htmlExtraido,
-                                anotacoes: ""
-                            });
-                        }
+                    Próximo ▶️
 
-                        ordenarTrabalhos();
-                        mostrarStatus('🚀 Sucesso! Seu trabalho foi transformado e enviado para a fila de slides.', 'success');
-                        
-                        // Limpa os campos do formulário após envio com sucesso
-                        document.getElementById('aluno-nome').value = '';
-                        document.getElementById('aluno-arquivo').value = '';
-                    })
-                    .catch(function(err) {
-                        console.error(err);
-                        mostrarStatus('Erro ao ler o arquivo Word. Verifique se ele não está corrompido.', 'error');
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ANOTAÇÕES -->
+
+        <div
+            class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+
+
+            <div>
+
+                <h3
+                    class="text-lg font-bold text-gray-800 mb-2 border-b pb-2">
+
+                    📝 Espaço de Anotações
+
+                </h3>
+
+
+                <p
+                    class="text-xs text-gray-500 mb-3">
+
+                    As notas digitadas ficam salvas automaticamente para cada aluno.
+
+                </p>
+
+
+                <textarea
+                    id="campo-anotacoes"
+                    disabled
+                    class="w-full h-64 p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-gray-50 text-gray-700"
+                    placeholder="Selecione um trabalho para fazer anotações...">
+                </textarea>
+
+            </div>
+
+
+            <div
+                class="bg-yellow-50 border border-yellow-200 p-3 rounded text-xs text-yellow-800 mt-4">
+
+                💡
+                <strong>Dica Pedagógica:</strong>
+
+                Use este espaço para registrar observações sobre o projeto do aluno.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+
+
+<!-- ========================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================================= -->
+
+<script>
+
+
+/* =========================================================
+   VARIÁVEIS
+   ========================================================= */
+
+let dadosTurma =
+    JSON.parse(localStorage.getItem('dadosTurma')) || [];
+
+
+let indexAtual = 0;
+
+
+let professorAutenticado = false;
+
+
+/*
+   A senha fica armazenada no navegador.
+
+   NÃO colocamos uma senha fixa aqui.
+
+   No primeiro acesso o professor cria a própria senha.
+*/
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+
+if (dadosTurma.length > 0) {
+
+    ordenarTrabalhos();
+
+}
+
+
+/* =========================================================
+   VERIFICAR SE JÁ EXISTE SENHA
+   ========================================================= */
+
+function existeSenhaProfessor() {
+
+    return localStorage.getItem('senhaProfessor') !== null;
+
+}
+
+
+/* =========================================================
+   ABRIR ÁREA DO PROFESSOR
+   ========================================================= */
+
+function abrirAreaProfessor() {
+
+
+    if (professorAutenticado) {
+
+        switchTab('professor');
+
+        return;
+
+    }
+
+
+    /*
+       Primeiro acesso:
+       não existe senha ainda.
+    */
+
+    if (!existeSenhaProfessor()) {
+
+        document
+            .getElementById('modal-primeira-senha')
+            .classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    /*
+       Usuário já possui senha.
+    */
+
+    document
+        .getElementById('senha-login')
+        .value = '';
+
+
+    document
+        .getElementById('erro-login')
+        .classList.add('hidden');
+
+
+    document
+        .getElementById('modal-senha')
+        .classList.remove('hidden');
+
+
+    setTimeout(function () {
+
+        document
+            .getElementById('senha-login')
+            .focus();
+
+    }, 100);
+
+}
+
+
+/* =========================================================
+   PRIMEIRO ACESSO
+   ========================================================= */
+
+function salvarPrimeiraSenha() {
+
+
+    const senha =
+        document
+            .getElementById('nova-senha-primeiro-acesso')
+            .value;
+
+
+    const confirmacao =
+        document
+            .getElementById('confirmar-senha-primeiro-acesso')
+            .value;
+
+
+    const erro =
+        document
+            .getElementById('erro-primeira-senha');
+
+
+    erro.classList.add('hidden');
+
+
+    if (senha.length < 6) {
+
+        erro.innerText =
+            '❌ A senha deve ter pelo menos 6 caracteres.';
+
+        erro.classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    if (senha !== confirmacao) {
+
+        erro.innerText =
+            '❌ As senhas não são iguais.';
+
+        erro.classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    /*
+       Salva a senha no navegador.
+    */
+
+    localStorage.setItem(
+        'senhaProfessor',
+        senha
+    );
+
+
+    professorAutenticado = true;
+
+
+    fecharPrimeiroAcesso();
+
+
+    switchTab('professor');
+
+
+    alert(
+        '✅ Senha criada com sucesso!'
+    );
+
+}
+
+
+/* =========================================================
+   FECHAR PRIMEIRO ACESSO
+   ========================================================= */
+
+function fecharPrimeiroAcesso() {
+
+    document
+        .getElementById('modal-primeira-senha')
+        .classList.add('hidden');
+
+}
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+function verificarLogin() {
+
+
+    const senhaDigitada =
+        document
+            .getElementById('senha-login')
+            .value;
+
+
+    const senhaCorreta =
+        localStorage.getItem('senhaProfessor');
+
+
+    if (senhaDigitada === senhaCorreta) {
+
+
+        professorAutenticado = true;
+
+
+        fecharModalSenha();
+
+
+        switchTab('professor');
+
+
+    } else {
+
+
+        document
+            .getElementById('erro-login')
+            .classList.remove('hidden');
+
+
+        document
+            .getElementById('senha-login')
+            .value = '';
+
+
+        document
+            .getElementById('senha-login')
+            .focus();
+
+    }
+
+}
+
+
+/* =========================================================
+   FECHAR LOGIN
+   ========================================================= */
+
+function fecharModalSenha() {
+
+    document
+        .getElementById('modal-senha')
+        .classList.add('hidden');
+
+}
+
+
+/* =========================================================
+   ALTERAR SENHA
+   ========================================================= */
+
+function abrirAlterarSenha() {
+
+
+    if (!professorAutenticado) {
+
+        return;
+
+    }
+
+
+    document
+        .getElementById('senha-atual')
+        .value = '';
+
+
+    document
+        .getElementById('nova-senha')
+        .value = '';
+
+
+    document
+        .getElementById('confirmar-nova-senha')
+        .value = '';
+
+
+    document
+        .getElementById('erro-alterar-senha')
+        .classList.add('hidden');
+
+
+    document
+        .getElementById('modal-alterar-senha')
+        .classList.remove('hidden');
+
+}
+
+
+/* =========================================================
+   CONFIRMAR ALTERAÇÃO
+   ========================================================= */
+
+function alterarSenha() {
+
+
+    const senhaAtual =
+        document.getElementById('senha-atual').value;
+
+
+    const novaSenha =
+        document.getElementById('nova-senha').value;
+
+
+    const confirmacao =
+        document.getElementById('confirmar-nova-senha').value;
+
+
+    const senhaSalva =
+        localStorage.getItem('senhaProfessor');
+
+
+    const erro =
+        document.getElementById('erro-alterar-senha');
+
+
+    erro.classList.add('hidden');
+
+
+    if (senhaAtual !== senhaSalva) {
+
+        erro.innerText =
+            '❌ A senha atual está incorreta.';
+
+        erro.classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    if (novaSenha.length < 6) {
+
+        erro.innerText =
+            '❌ A nova senha deve ter pelo menos 6 caracteres.';
+
+        erro.classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    if (novaSenha !== confirmacao) {
+
+        erro.innerText =
+            '❌ A confirmação da nova senha não confere.';
+
+        erro.classList.remove('hidden');
+
+        return;
+
+    }
+
+
+    /*
+       Salva nova senha.
+    */
+
+    localStorage.setItem(
+        'senhaProfessor',
+        novaSenha
+    );
+
+
+    fecharAlterarSenha();
+
+
+    alert(
+        '✅ Senha alterada com sucesso!'
+    );
+
+}
+
+
+/* =========================================================
+   FECHAR ALTERAÇÃO
+   ========================================================= */
+
+function fecharAlterarSenha() {
+
+    document
+        .getElementById('modal-alterar-senha')
+        .classList.add('hidden');
+
+}
+
+
+/* =========================================================
+   SAIR DO PROFESSOR
+   ========================================================= */
+
+function sairProfessor() {
+
+
+    professorAutenticado = false;
+
+
+    document
+        .getElementById('aba-professor')
+        .classList.add('hidden');
+
+
+    document
+        .getElementById('aba-aluno')
+        .classList.remove('hidden');
+
+
+    document
+        .getElementById('btn-aluno')
+        .className =
+        "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+
+
+    document
+        .getElementById('btn-professor')
+        .className =
+        "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
+
+
+    alert(
+        '🚪 Você saiu da Área do Professor.'
+    );
+
+}
+
+
+/* =========================================================
+   TROCA DE ABAS
+   ========================================================= */
+
+function switchTab(aba) {
+
+
+    const abaAluno =
+        document.getElementById('aba-aluno');
+
+
+    const abaProfessor =
+        document.getElementById('aba-professor');
+
+
+    const btnAluno =
+        document.getElementById('btn-aluno');
+
+
+    const btnProfessor =
+        document.getElementById('btn-professor');
+
+
+    if (aba === 'aluno') {
+
+
+        abaAluno.classList.remove('hidden');
+
+
+        abaProfessor.classList.add('hidden');
+
+
+        btnAluno.className =
+            "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+
+
+        btnProfessor.className =
+            "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
+
+
+        return;
+
+    }
+
+
+    /*
+       Proteção extra.
+    */
+
+    if (!professorAutenticado) {
+
+        abrirAreaProfessor();
+
+        return;
+
+    }
+
+
+    abaAluno.classList.add('hidden');
+
+
+    abaProfessor.classList.remove('hidden');
+
+
+    btnAluno.className =
+        "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
+
+
+    btnProfessor.className =
+        "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+
+
+    renderizarSlides();
+
+}
+
+
+/* =========================================================
+   ENVIAR TRABALHO
+   ========================================================= */
+
+function processarEEnviar() {
+
+
+    const nomeInput =
+        document.getElementById('aluno-nome')
+        .value
+        .trim();
+
+
+    const arquivoInput =
+        document.getElementById('aluno-arquivo')
+        .files[0];
+
+
+    if (!nomeInput) {
+
+        mostrarStatus(
+            'Por favor, insira o seu nome antes de enviar.',
+            'error'
+        );
+
+        return;
+
+    }
+
+
+    if (!arquivoInput) {
+
+        mostrarStatus(
+            'Por favor, escolha seu arquivo Word.',
+            'error'
+        );
+
+        return;
+
+    }
+
+
+    mostrarStatus(
+        'Lendo e estruturando seu arquivo... Aguarde.',
+        'info'
+    );
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function (event) {
+
+
+            const arrayBuffer =
+                event.target.result;
+
+
+            mammoth.convertToHtml({
+                arrayBuffer: arrayBuffer
+            })
+
+
+            .then(function (result) {
+
+
+                const htmlExtraido =
+                    result.value;
+
+
+                const indexExistente =
+                    dadosTurma.findIndex(
+                        item =>
+                            item.nome.toLowerCase() ===
+                            nomeInput.toLowerCase()
+                    );
+
+
+                if (indexExistente > -1) {
+
+
+                    dadosTurma[indexExistente].html =
+                        htmlExtraido;
+
+
+                } else {
+
+
+                    dadosTurma.push({
+
+                        nome: nomeInput,
+
+                        html: htmlExtraido,
+
+                        anotacoes: ""
+
                     });
-            };
-            reader.readAsArrayBuffer(arquivoInput);
+
+                }
+
+
+                ordenarTrabalhos();
+
+
+                mostrarStatus(
+                    '🚀 Trabalho enviado com sucesso!',
+                    'success'
+                );
+
+
+                document
+                    .getElementById('aluno-nome')
+                    .value = '';
+
+
+                document
+                    .getElementById('aluno-arquivo')
+                    .value = '';
+
+
+            })
+
+
+            .catch(function (err) {
+
+
+                console.error(err);
+
+
+                mostrarStatus(
+                    'Erro ao ler o arquivo Word.',
+                    'error'
+                );
+
+
+            });
+
+        };
+
+
+    reader.readAsArrayBuffer(
+        arquivoInput
+    );
+
+}
+
+
+/* =========================================================
+   ORDENAR TRABALHOS
+   ========================================================= */
+
+function ordenarTrabalhos() {
+
+
+    dadosTurma.sort(
+        function (a, b) {
+
+            return a.nome.localeCompare(
+                b.nome,
+                'pt',
+                {
+                    sensitivity: 'base'
+                }
+            );
+
         }
+    );
 
-        function ordenarTrabalhos() {
-            // Ordena os trabalhos de A a Z pelo nome do aluno
-            dadosTurma.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
-            localStorage.setItem('dadosTurma', JSON.stringify(dadosTurma));
-        }
 
-        function mostrarStatus(mensagem, tipo) {
-            const statusDiv = document.getElementById('status-envio');
-            statusDiv.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-blue-100', 'text-blue-800');
-            
-            if (tipo === 'error') {
-                statusDiv.classList.add('bg-red-100', 'text-red-800');
-            } else if (tipo === 'success') {
-                statusDiv.classList.add('bg-green-100', 'text-green-800');
-            } else {
-                statusDiv.classList.add('bg-blue-100', 'text-blue-800');
-            }
-            statusDiv.innerText = mensagem;
-            statusDiv.classList.remove('hidden');
-        }
+    localStorage.setItem(
+        'dadosTurma',
+        JSON.stringify(dadosTurma)
+    );
 
-        // Renderiza e gerencia os slides e as anotações
-        function renderizarSlides() {
-            const semTrabalhos = document.getElementById('sem-trabalhos');
-            const conteudoSlide = document.getElementById('conteudo-slide');
-            const controlesSlide = document.getElementById('controles-slide');
-            const campoAnotacoes = document.getElementById('campo-anotacoes');
+}
 
-            if (dadosTurma.length === 0) {
-                semTrabalhos.classList.remove('hidden');
-                conteudoSlide.classList.add('hidden');
-                controlesSlide.classList.add('hidden');
-                campoAnotacoes.value = "";
-                campoAnotacoes.setAttribute('disabled', 'true');
-                campoAnotacoes.classList.add('bg-gray-50');
-                return;
-            }
 
-            semTrabalhos.classList.add('hidden');
-            conteudoSlide.classList.remove('hidden');
-            controlesSlide.classList.remove('hidden');
-            campoAnotacoes.removeAttribute('disabled');
-            campoAnotacoes.classList.remove('bg-gray-50');
+/* =========================================================
+   STATUS
+   ========================================================= */
 
-            // Garante estabilidade nos limites do índice
-            if (indexAtual >= dadosTurma.length) indexAtual = dadosTurma.length - 1;
-            if (indexAtual < 0) indexAtual = 0;
+function mostrarStatus(
+    mensagem,
+    tipo
+) {
 
-            const itemAtual = dadosTurma[indexAtual];
-            
-            document.getElementById('slide-nome-aluno').innerText = itemAtual.nome;
-            document.getElementById('slide-contador').innerText = `${indexAtual + 1} / ${dadosTurma.length}`;
-            document.getElementById('slide-texto-word').innerHTML = itemAtual.html || "<p class='text-gray-400 italic'>O arquivo enviado estava sem conteúdo legível.</p>";
-            
-            // Carrega a anotação salva para este aluno específico
-            campoAnotacoes.value = itemAtual.anotacoes || "";
-        }
 
-        function mudarSlide(direcao) {
-            indexAtual += direcao;
-            if (indexAtual >= dadosTurma.length) indexAtual = 0; // Volta ao início
-            if (indexAtual < 0) indexAtual = dadosTurma.length - 1; // Vai para o fim
-            renderizarSlides();
-        }
+    const status =
+        document.getElementById(
+            'status-envio'
+        );
 
-        // Escuta e salva as anotações dinamicamente em tempo de digitação
-        document.getElementById('campo-anotacoes').addEventListener('input', function(e) {
+
+    status.classList.remove(
+        'hidden',
+        'bg-red-100',
+        'text-red-800',
+        'bg-green-100',
+        'text-green-800',
+        'bg-blue-100',
+        'text-blue-800'
+    );
+
+
+    if (tipo === 'error') {
+
+        status.classList.add(
+            'bg-red-100',
+            'text-red-800'
+        );
+
+    }
+
+    else if (tipo === 'success') {
+
+        status.classList.add(
+            'bg-green-100',
+            'text-green-800'
+        );
+
+    }
+
+    else {
+
+        status.classList.add(
+            'bg-blue-100',
+            'text-blue-800'
+        );
+
+    }
+
+
+    status.innerText =
+        mensagem;
+
+
+    status.classList.remove(
+        'hidden'
+    );
+
+}
+
+
+/* =========================================================
+   RENDERIZAR SLIDES
+   ========================================================= */
+
+function renderizarSlides() {
+
+
+    const semTrabalhos =
+        document.getElementById(
+            'sem-trabalhos'
+        );
+
+
+    const conteudoSlide =
+        document.getElementById(
+            'conteudo-slide'
+        );
+
+
+    const controlesSlide =
+        document.getElementById(
+            'controles-slide'
+        );
+
+
+    const campoAnotacoes =
+        document.getElementById(
+            'campo-anotacoes'
+        );
+
+
+    if (dadosTurma.length === 0) {
+
+
+        semTrabalhos.classList.remove(
+            'hidden'
+        );
+
+
+        conteudoSlide.classList.add(
+            'hidden'
+        );
+
+
+        controlesSlide.classList.add(
+            'hidden'
+        );
+
+
+        campoAnotacoes.value = '';
+
+
+        campoAnotacoes.setAttribute(
+            'disabled',
+            'true'
+        );
+
+
+        campoAnotacoes.classList.add(
+            'bg-gray-50'
+        );
+
+
+        return;
+
+    }
+
+
+    semTrabalhos.classList.add(
+        'hidden'
+    );
+
+
+    conteudoSlide.classList.remove(
+        'hidden'
+    );
+
+
+    controlesSlide.classList.remove(
+        'hidden'
+    );
+
+
+    campoAnotacoes.removeAttribute(
+        'disabled'
+    );
+
+
+    campoAnotacoes.classList.remove(
+        'bg-gray-50'
+    );
+
+
+    if (indexAtual >= dadosTurma.length) {
+
+        indexAtual =
+            dadosTurma.length - 1;
+
+    }
+
+
+    if (indexAtual < 0) {
+
+        indexAtual = 0;
+
+    }
+
+
+    const itemAtual =
+        dadosTurma[indexAtual];
+
+
+    document
+        .getElementById(
+            'slide-nome-aluno'
+        )
+        .innerText =
+        itemAtual.nome;
+
+
+    document
+        .getElementById(
+            'slide-contador'
+        )
+        .innerText =
+        `${indexAtual + 1} / ${dadosTurma.length}`;
+
+
+    document
+        .getElementById(
+            'slide-texto-word'
+        )
+        .innerHTML =
+        itemAtual.html ||
+        "<p class='text-gray-400 italic'>O arquivo não possui conteúdo legível.</p>";
+
+
+    campoAnotacoes.value =
+        itemAtual.anotacoes || '';
+
+}
+
+
+/* =========================================================
+   MUDAR SLIDE
+   ========================================================= */
+
+function mudarSlide(
+    direcao
+) {
+
+
+    if (dadosTurma.length === 0) {
+
+        return;
+
+    }
+
+
+    indexAtual += direcao;
+
+
+    if (indexAtual >= dadosTurma.length) {
+
+        indexAtual = 0;
+
+    }
+
+
+    if (indexAtual < 0) {
+
+        indexAtual =
+            dadosTurma.length - 1;
+
+    }
+
+
+    renderizarSlides();
+
+}
+
+
+/* =========================================================
+   ANOTAÇÕES
+   ========================================================= */
+
+document
+    .getElementById(
+        'campo-anotacoes'
+    )
+    .addEventListener(
+        'input',
+        function (e) {
+
+
             if (dadosTurma[indexAtual]) {
-                dadosTurma[indexAtual].anotacoes = e.target.value;
-                localStorage.setItem('dadosTurma', JSON.stringify(dadosTurma));
-            }
-        });
 
-        // Apaga a memória para reiniciar a dinâmica com outra turma
-        function limparTodosDados() {
-            if (confirm("Tem certeza que deseja apagar os arquivos enviados? Isso removerá o trabalho de todos e as anotações.")) {
-                dadosTurma = [];
-                indexAtual = 0;
-                localStorage.removeItem('dadosTurma');
-                renderizarSlides();
+
+                dadosTurma[indexAtual]
+                    .anotacoes =
+                    e.target.value;
+
+
+                localStorage.setItem(
+                    'dadosTurma',
+                    JSON.stringify(
+                        dadosTurma
+                    )
+                );
+
             }
+
         }
-    </script>
+    );
+
+
+/* =========================================================
+   EXCLUIR TRABALHO ATUAL
+   ========================================================= */
+
+function excluirTrabalhoAtual() {
+
+
+    if (!professorAutenticado) {
+
+        return;
+
+    }
+
+
+    if (dadosTurma.length === 0) {
+
+        alert(
+            'Não há trabalhos para excluir.'
+        );
+
+        return;
+
+    }
+
+
+    const trabalho =
+        dadosTurma[indexAtual];
+
+
+    const confirmar =
+        confirm(
+            `Tem certeza que deseja excluir o trabalho de "${trabalho.nome}"?\n\n` +
+            `O trabalho e as anotações deste aluno serão removidos.`
+        );
+
+
+    if (!confirmar) {
+
+        return;
+
+    }
+
+
+    dadosTurma.splice(
+        indexAtual,
+        1
+    );
+
+
+    localStorage.setItem(
+        'dadosTurma',
+        JSON.stringify(
+            dadosTurma
+        )
+    );
+
+
+    if (indexAtual >= dadosTurma.length) {
+
+        indexAtual =
+            dadosTurma.length - 1;
+
+    }
+
+
+    if (indexAtual < 0) {
+
+        indexAtual = 0;
+
+    }
+
+
+    renderizarSlides();
+
+
+    alert(
+        '🗑️ Trabalho excluído com sucesso.'
+    );
+
+}
+
+
+/* =========================================================
+   TECLA ESC
+   ========================================================= */
+
+document.addEventListener(
+    'keydown',
+    function (event) {
+
+
+        if (event.key === 'Escape') {
+
+
+            fecharModalSenha();
+
+
+            fecharPrimeiroAcesso();
+
+
+            fecharAlterarSenha();
+
+        }
+
+    }
+);
+
+</script>
+
 </body>
+
 </html>
