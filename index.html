@@ -456,16 +456,9 @@
     // DADOS LOCAIS DOS TRABALHOS
     // =========================================================
 
-    let dadosTurma =
-        JSON.parse(localStorage.getItem('dadosTurma')) || [];
+    let dadosTurma = [];
 
     let indexAtual = 0;
-
-
-    if (dadosTurma.length > 0) {
-        ordenarTrabalhos();
-    }
-
 
     // =========================================================
     // VERIFICAR SESSÃO DO PROFESSOR
@@ -594,30 +587,31 @@
     // MOSTRAR ÁREA DO PROFESSOR
     // =========================================================
 
-    function mostrarAreaProfessor() {
+  function mostrarAreaProfessor() {
 
-        document.getElementById('aba-aluno')
-            .classList.add('hidden');
+    document.getElementById('aba-aluno')
+        .classList.add('hidden');
 
-        document.getElementById('aba-login-professor')
-            .classList.add('hidden');
+    document.getElementById('aba-login-professor')
+        .classList.add('hidden');
 
-        document.getElementById('aba-professor')
-            .classList.remove('hidden');
+    document.getElementById('aba-professor')
+        .classList.remove('hidden');
 
-        document.getElementById('btn-sair')
-            .classList.remove('hidden');
-
-
-        document.getElementById('btn-aluno').className =
-            "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
-
-        document.getElementById('btn-professor').className =
-            "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition shadow";
+    document.getElementById('btn-sair')
+        .classList.remove('hidden');
 
 
-        renderizarSlides();
+    document.getElementById('btn-aluno').className =
+        "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition";
 
+    document.getElementById('btn-professor').className =
+        "bg-blue-800 text-white px-4 py-2 rounded font-semibold transition";
+
+
+    carregarTrabalhos();
+
+}
     }
 
 
@@ -780,34 +774,163 @@
     }
 
 
-    // =========================================================
-    // ENVIO DO TRABALHO
-    // =========================================================
+// =========================================================
+// CARREGAR TRABALHOS DO SUPABASE
+// =========================================================
 
-    function processarEEnviar() {
+async function carregarTrabalhos() {
 
-        const nomeInput =
-            document.getElementById('aluno-nome')
-                .value.trim();
-
-        const arquivoInput =
-            document.getElementById('aluno-arquivo')
-                .files[0];
-
-        const statusDiv =
-            document.getElementById('status-envio');
+    const { data, error } =
+        await supabaseClient
+            .from('trabalhos')
+            .select('*')
+            .order('nome', { ascending: true });
 
 
-        if (!nomeInput) {
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            'Erro ao carregar os trabalhos do Supabase.'
+        );
+
+        return;
+    }
+
+
+    dadosTurma = data || [];
+
+    indexAtual = 0;
+
+    renderizarSlides();
+
+}
+   // =========================================================
+// ENVIO DO TRABALHO PARA O SUPABASE
+// =========================================================
+
+function processarEEnviar() {
+
+    const nomeInput =
+        document.getElementById('aluno-nome')
+            .value.trim();
+
+    const arquivoInput =
+        document.getElementById('aluno-arquivo')
+            .files[0];
+
+
+    if (!nomeInput) {
+
+        mostrarStatus(
+            'Por favor, insira o seu nome antes de enviar.',
+            'error'
+        );
+
+        return;
+    }
+
+
+    if (!arquivoInput) {
+
+        mostrarStatus(
+            'Por favor, escolha o seu arquivo Word (.docx).',
+            'error'
+        );
+
+        return;
+    }
+
+
+    mostrarStatus(
+        'Lendo e estruturando seu arquivo... Aguarde.',
+        'info'
+    );
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload = function(event) {
+
+        const arrayBuffer =
+            event.target.result;
+
+
+        mammoth.convertToHtml({
+            arrayBuffer: arrayBuffer
+        })
+
+        .then(async function(result) {
+
+            const htmlExtraido =
+                result.value;
+
 
             mostrarStatus(
-                'Por favor, insira o seu nome antes de enviar.',
+                'Enviando trabalho para o servidor...',
+                'info'
+            );
+
+
+            const { error } =
+                await supabaseClient
+                    .from('trabalhos')
+                    .insert([
+                        {
+                            nome: nomeInput,
+                            html: htmlExtraido,
+                            anotacoes: ""
+                        }
+                    ]);
+
+
+            if (error) {
+
+                console.error(error);
+
+                mostrarStatus(
+                    '❌ Erro ao enviar o trabalho. Tente novamente.',
+                    'error'
+                );
+
+                return;
+            }
+
+
+            mostrarStatus(
+                '🚀 Sucesso! Seu trabalho foi enviado para o professor.',
+                'success'
+            );
+
+
+            document.getElementById('aluno-nome')
+                .value = '';
+
+            document.getElementById('aluno-arquivo')
+                .value = '';
+
+        })
+
+        .catch(function(err) {
+
+            console.error(err);
+
+            mostrarStatus(
+                'Erro ao ler o arquivo Word. Verifique se ele não está corrompido.',
                 'error'
             );
 
-            return;
-        }
+        });
 
+    };
+
+
+    reader.readAsArrayBuffer(arquivoInput);
+
+}
 
         if (!arquivoInput) {
 
@@ -908,34 +1031,7 @@
         reader.readAsArrayBuffer(arquivoInput);
 
     }
-
-
-    // =========================================================
-    // ORDENAR TRABALHOS
-    // =========================================================
-
-    function ordenarTrabalhos() {
-
-        dadosTurma.sort(
-            (a, b) =>
-                a.nome.localeCompare(
-                    b.nome,
-                    'pt',
-                    {
-                        sensitivity: 'base'
-                    }
-                )
-        );
-
-
-        localStorage.setItem(
-            'dadosTurma',
-            JSON.stringify(dadosTurma)
-        );
-
-    }
-
-
+   
     // =========================================================
     // STATUS DOS TRABALHOS
     // =========================================================
@@ -1122,55 +1218,92 @@
     // =========================================================
     // SALVAR ANOTAÇÕES
     // =========================================================
+document.getElementById(
+    'campo-anotacoes'
+).addEventListener(
+    'input',
+    async function(e) {
 
-    document.getElementById(
-        'campo-anotacoes'
-    ).addEventListener(
-        'input',
-        function(e) {
-
-            if (dadosTurma[indexAtual]) {
-
-                dadosTurma[indexAtual].anotacoes =
-                    e.target.value;
-
-
-                localStorage.setItem(
-                    'dadosTurma',
-                    JSON.stringify(dadosTurma)
-                );
-
-            }
-
+        if (!dadosTurma[indexAtual]) {
+            return;
         }
-    );
 
 
-    // =========================================================
-    // LIMPAR TODOS OS DADOS
-    // =========================================================
+        const id =
+            dadosTurma[indexAtual].id;
 
-    function limparTodosDados() {
+        const anotacoes =
+            e.target.value;
 
-        if (
-            confirm(
-                "Tem certeza que deseja apagar os arquivos enviados? Isso removerá o trabalho de todos e as anotações."
-            )
-        ) {
 
-            dadosTurma = [];
+        dadosTurma[indexAtual].anotacoes =
+            anotacoes;
 
-            indexAtual = 0;
 
-            localStorage.removeItem(
-                'dadosTurma'
+        const { error } =
+            await supabaseClient
+                .from('trabalhos')
+                .update({
+                    anotacoes: anotacoes
+                })
+                .eq('id', id);
+
+
+        if (error) {
+
+            console.error(
+                'Erro ao salvar anotação:',
+                error
             );
-
-            renderizarSlides();
 
         }
 
     }
+);
+
+  // =========================================================
+// LIMPAR TODOS OS TRABALHOS
+// =========================================================
+
+async function limparTodosDados() {
+
+    if (
+        !confirm(
+            "Tem certeza que deseja apagar os arquivos enviados? Isso removerá o trabalho de todos e as anotações."
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from('trabalhos')
+            .delete()
+            .not('id', 'is', null);
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            'Erro ao apagar os trabalhos.'
+        );
+
+        return;
+    }
+
+
+    dadosTurma = [];
+
+    indexAtual = 0;
+
+    renderizarSlides();
+
+}
 
 </script>
 ```
