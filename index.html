@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Projetos da Turma</title>
 
-```
 <!-- Tailwind CSS -->
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
@@ -50,13 +49,11 @@
         margin-bottom: 0.75rem;
     }
 </style>
-```
 
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">
 
-```
 <!-- ========================================================= -->
 <!-- NAVEGAÇÃO -->
 <!-- ========================================================= -->
@@ -360,6 +357,14 @@
                         class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
 
                         ◀️ Anterior
+
+                    </button>
+
+                    <button
+                        onclick="excluirTrabalhoAtual()"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+
+                        🗑️ Excluir este trabalho
 
                     </button>
 
@@ -820,7 +825,6 @@ function processarEEnviar() {
         document.getElementById('aluno-arquivo')
             .files[0];
 
-
     if (!nomeInput) {
 
         mostrarStatus(
@@ -831,91 +835,98 @@ function processarEEnviar() {
         return;
     }
 
-
-          if (!arquivoInput) {
-
-            mostrarStatus(
-                'Por favor, escolha o seu arquivo Word (.docx).',
-                'error'
-            );
-
-            return;
-        }
-
+    if (!arquivoInput) {
 
         mostrarStatus(
-            'Lendo e estruturando seu arquivo... Aguarde.',
-            'info'
+            'Por favor, escolha o seu arquivo Word (.docx).',
+            'error'
         );
 
+        return;
+    }
 
-        const reader =
-            new FileReader();
+    mostrarStatus(
+        'Lendo e estruturando seu arquivo... Aguarde.',
+        'info'
+    );
 
+    const reader =
+        new FileReader();
 
-        reader.onload = function(event) {
+    reader.onload = function(event) {
 
-            const arrayBuffer =
-                event.target.result;
+        const arrayBuffer =
+            event.target.result;
 
+        mammoth.convertToHtml({
+            arrayBuffer: arrayBuffer
+        })
 
-            mammoth.convertToHtml({
-                arrayBuffer: arrayBuffer
-            })
+        .then(async function(result) {
 
-            .then(function(result) {
+            const htmlExtraido =
+                result.value;
 
-                const htmlExtraido =
-                    result.value;
+            mostrarStatus(
+                'Enviando trabalho para o servidor...',
+                'info'
+            );
 
+            const { error } =
+                await supabaseClient
+                    .from('trabalhos')
+                    .insert([
+                        {
+                            nome: nomeInput,
+                            html: htmlExtraido,
+                            anotacoes: ""
+                        }
+                    ]);
 
-                const indexExistente =
-                    dadosTurma.findIndex(
-                        item =>
-                            item.nome.toLowerCase() ===
-                            nomeInput.toLowerCase()
-                    );
+            if (error) {
 
-
-                if (indexExistente > -1) {
-
-                    dadosTurma[indexExistente].html =
-                        htmlExtraido;
-
-                } else {
-
-                  
-                mostrarStatus(
-                    '🚀 Sucesso! Seu trabalho foi transformado e enviado para a fila de slides.',
-                    'success'
-                );
-
-
-                document.getElementById('aluno-nome')
-                    .value = '';
-
-                document.getElementById('aluno-arquivo')
-                    .value = '';
-
-            })
-
-            .catch(function(err) {
-
-                console.error(err);
+                console.error(error);
 
                 mostrarStatus(
-                    'Erro ao ler o arquivo Word. Verifique se ele não está corrompido.',
+                    '❌ Erro ao enviar o trabalho. Tente novamente.',
                     'error'
                 );
 
-            });
+                return;
+            }
 
-        };
+            mostrarStatus(
+                '🚀 Sucesso! Seu trabalho foi enviado para o professor.',
+                'success'
+            );
+
+            document.getElementById('aluno-nome')
+                .value = '';
+
+            document.getElementById('aluno-arquivo')
+                .value = '';
+
+        })
+
+        .catch(function(err) {
+
+            console.error(err);
+
+            mostrarStatus(
+                'Erro ao ler o arquivo Word. Verifique se ele não está corrompido.',
+                'error'
+            );
+
+        });
+
+    };
+
+    reader.readAsArrayBuffer(arquivoInput);
+
+}
 
 
-        reader.readAsArrayBuffer(arquivoInput);
 
-    }
    
     // =========================================================
     // STATUS DOS TRABALHOS
@@ -1147,7 +1158,58 @@ document.getElementById(
 );
 
   // =========================================================
+// EXCLUIR TRABALHO ATUAL
+// =========================================================
+
+async function excluirTrabalhoAtual() {
+
+    if (!dadosTurma[indexAtual]) {
+        return;
+    }
+
+    const trabalho = dadosTurma[indexAtual];
+
+    const confirmar =
+        confirm(
+            `Tem certeza que deseja excluir o trabalho de "${trabalho.nome}"?\n\nEssa ação não poderá ser desfeita.`
+        );
+
+    if (!confirmar) {
+        return;
+    }
+
+    const { error } =
+        await supabaseClient
+            .from('trabalhos')
+            .delete()
+            .eq('id', trabalho.id);
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            'Erro ao excluir o trabalho. Tente novamente.'
+        );
+
+        return;
+    }
+
+    dadosTurma.splice(indexAtual, 1);
+
+    if (indexAtual >= dadosTurma.length) {
+        indexAtual = Math.max(0, dadosTurma.length - 1);
+    }
+
+    renderizarSlides();
+}
+
+
+// =========================================================
 // LIMPAR TODOS OS TRABALHOS
+// =========================================================
+
+
 // =========================================================
 
 async function limparTodosDados() {
@@ -1191,7 +1253,6 @@ async function limparTodosDados() {
 }
 
 </script>
-```
 
 </body>
 </html>
