@@ -883,17 +883,17 @@ function processarEEnviar() {
                         }
                     ]);
 
-            if (error) {
+           if (error) {
 
-                console.error(error);
+    console.error('ERRO COMPLETO DO SUPABASE:', error);
 
-                mostrarStatus(
-                    '❌ Erro ao enviar o trabalho. Tente novamente.',
-                    'error'
-                );
+    mostrarStatus(
+        '❌ Erro do Supabase: ' + error.message,
+        'error'
+    );
 
-                return;
-            }
+    return;
+}
 
             mostrarStatus(
                 '🚀 Sucesso! Seu trabalho foi enviado para o professor.',
